@@ -39,6 +39,10 @@ func (r *Request) sendMail(message string) bool{
 }
 
 func SuccessMail(donor *model.Donor) {
+	if len(donor.Email)==0 {
+		log.Println("Invalid email for " + donor.Name)
+		return
+	}
 	r := newRequest(donor.Email)
 	msg := "Dear " + donor.Name + ", You have been successfully registered as a Donor at DonorSpace." +
 		"Your registration id is DSpace_" + strconv.Itoa(int(donor.Id))

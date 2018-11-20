@@ -21,6 +21,7 @@ const (
 )
 
 func (m *DonorDAO) Connect() {
+	return
 	session, err := mgo.Dial(m.Server)
 	if err != nil {
 		fmt.Println("Error while connecting DB")
