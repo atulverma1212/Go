@@ -54,14 +54,14 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid user details", http.StatusNotAcceptable)
 		return
 	}
-	donor.Verified = "Yes"
+	donor.Verified = getToken(&donor)[0:10]
 	if err := dao.create(&donor); err != nil {
 		log.Println("Error while saving data")
 		http.Error(w, "Error while saving data", http.StatusNotAcceptable)
 		return
 	}
 	response := utils.MakeResponse(&donor)
-	response["Response"] = "You have been Successfully registered as a Donor at DonorSpace with Id: " + response["Id"]
+	response["Response"] = "You are on the way. Confirm your email by clicking the link sent in the Verification email sent to you."
 	res, err := json.Marshal(response)
 	if err!= nil {
 		log.Printf("Error while marshaling json: " + err.Error())
@@ -110,17 +110,13 @@ func VerifyDonor(w http.ResponseWriter, r *http.Request) {
 	if params := mux.Vars(r); params != nil {
 		token, _ := params["token"]
 		keys := strings.Split(token, "|")
-		donor, err := findDonor(keys[1])
+		id, err:= dao.verify(keys[1],keys[0]);
 		if err!=nil {
-			w.Write([]byte("Donor not found."))
-			return
-		}
-		if donor.Verified == keys[0] {
-			donor.Verified = "Yes"
-			go service.SuccessMail(donor)
-			w.Write([]byte("Donor " + donor.Name + "verified successfully."))
+			errResp := utils.MakeError(err.Error())
+			http.Error(w,errResp,http.StatusNotAcceptable)
 		} else {
-			w.Write([]byte("Invalid verify token"))
+			resp := "DonorSpace Registration Successfull. You DonorSpace Id is " + id
+			w.Write([]byte(resp))
 		}
 	} else {
 		http.Error(w, "Invalid request parameters", http.StatusBadRequest)
@@ -128,20 +124,30 @@ func VerifyDonor(w http.ResponseWriter, r *http.Request) {
 }
 
 func RequestDonor(w http.ResponseWriter, r *http.Request) {
-	if params := mux.Vars(r); params != nil {
-		requestId := params["id"]
-		requestee,err := findDonor(requestId[7:])
-		if err!=nil {
-			http.Error(w, err.Error(), http.StatusNoContent)
-		}
-		requestDonation(requestee)
-		w.Write([]byte(fmt.Sprintf("Donation request sent to nearest 5 donors")))
-	} else {
-		http.Error(w, "Invalid request parameters", http.StatusBadRequest)
+	defer r.Body.Close()
+	request := make(map[string] string)
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Error while decoding request body", http.StatusBadRequest)
+		return
 	}
+	log.Printf("[RequestDonor]: Request Form Received: %v", request)
+	requestId := request["id"]
+	doctor := request["Doctor"]
+	dcontact := request["Contact"]
+	if len(requestId)<7 || requestId[0:7]!="DSpace_" || len(doctor)==0 || len(dcontact)<10{
+		err := utils.MakeError("Invalid Request. Please check if all the fields are valid")
+		http.Error(w, string(err), http.StatusNotAcceptable)
+		return
+	}
+	requestee,err := findDonor(requestId[7:])
+	if err!=nil {
+		http.Error(w, err.Error(), http.StatusNoContent)
+		return
+	}
+	go requestDonation(requestee)
+	response := utils.MakeDonationResponse(doctor, requestee.Name)
+	w.Write(response)
 }
-
-
 
 func findDonor(requestId string) (*model.Donor, error){
 	id,err := strconv.Atoi(requestId)
@@ -161,7 +167,7 @@ func requestDonation(requestee *model.Donor) error{
 			continue
 		}
 		for _,donor := range donorsList {
-			go service.RequestMail(&donor, requestee)
+			service.RequestMail(&donor, requestee)
 		}
 	}
 	return nil
@@ -198,7 +204,7 @@ func MedicalUpload(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Your file has been processed successfully"))
 }
 
-func getToken(donor *model.Donor) string{
+func getToken(donor *model.Donor) string {
 	payload := donor.Name + donor.District + donor.Phone + time.Now().String()
 	return base64.StdEncoding.EncodeToString([]byte(payload))
 }

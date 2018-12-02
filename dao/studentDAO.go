@@ -6,8 +6,9 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"
-	"GoProject/service"
 	"github.com/pkg/errors"
+	"strconv"
+	"GoProject/service"
 )
 
 type DonorDAO struct {
@@ -34,7 +35,7 @@ func (m *DonorDAO) connect() {
 func (m *DonorDAO) create(donor *model.Donor) error {
 	donor.Id = next(CollectionDonor)
 	err := db.C(CollectionDonor).Insert(&donor)
-	go service.SuccessMail(donor)
+	go service.VerificationMail(donor)
 	return err
 }
 
@@ -61,23 +62,26 @@ func (m *DonorDAO) delete(id uint64) error {
 	return err
 }
 
-func (m *DonorDAO) verify(id uint64, token string) error {
-	donor,err := dao.find(id)
+func (m *DonorDAO) verify(id string, token string) (string,error) {
+	donor,err := findDonor(id)
 	if err!= nil {
 		log.Printf("Failed to fetch donor with id %v", id)
-		return err
+		return "",err
 	}
 	if token == donor.Verified {
 		donor.Verified = "Yes"
 	} else {
 		log.Printf("Invalid verification token for donor with Id %v", donor.Id)
-		return errors.New("Invalid verification token")
+		log.Printf("Received: %v, Actual: %v", token, donor.Verified)
+		return "",errors.New("Invalid verification token")
 	}
-	if err = db.C(CollectionDonor).UpdateId(id, donor); err!= nil {
+	if err = db.C(CollectionDonor).UpdateId(donor.Id, donor); err!= nil {
 		log.Printf("Failed to verify donor with id %v", id)
-		return err
+		return "",err
 	}
-	return nil
+	identity := "DSpace_"+strconv.Itoa(int(donor.Id))
+	go service.SuccessMail(donor)
+	return identity,nil
 }
 
 func next(id string) uint64 {

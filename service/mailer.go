@@ -18,7 +18,7 @@ const (
 	verSUBJ = "DonorSpace Verification Mail"
 	regSUBJ  = "DonorSpace Registration Successful"
 	reqSUBJ = "Blood Donation Request"
-	HTMLfooter = "<hr>This is an auto-generated email. Please donot reply  to the sender. For any queries, contact team@DonorSpace"
+	HTMLfooter = "<br><br><br><p><hr>This is an auto-generated email. Please donot reply  to the sender. For any queries, contact team@DonorSpace</p>"
 )
 
 func newRequest(name,email,subject string) *Request {
@@ -47,7 +47,7 @@ func VerificationMail(donor *model.Donor) {
 		return
 	}
 	r := newRequest(donor.Name, donor.Email, verSUBJ)
-	link := "http://" + baseUrl + "/donor/verify?token=" + donor.Verified + "|" + strconv.Itoa(int(donor.Id))
+	link := "http://" + baseUrl + "/donor/verify/" + donor.Verified + "|" + strconv.Itoa(int(donor.Id))
 	msg := "Dear " + donor.Name + ", Click the following link to verify your email at DonorSpace." + link
 	htmlMsg := "<strong>" + msg + "</strong>" + HTMLfooter
 	if r.sendMail(msg, htmlMsg)!=true {
@@ -75,10 +75,11 @@ func RequestMail(donor *model.Donor, req *model.Donor) {
 		return
 	}
 	r := newRequest(donor.Name, donor.Email, reqSUBJ)
-	// Todo Edit message
-	msg := "<strong>Dear " + donor.Name + ", You have been successfully registered as a Donor at DonorSpace." +
-		"Your registration id is DSpace_" + strconv.Itoa(int(donor.Id)) +"</strong>"
-	if r.sendMail(msg,"" )!=true {
+	msg := "Dear " + donor.Name + ", You have been requested for blood donation by " + req.Name +
+		"Kindly contact to " + req.Name + " by Phone: " + req.Phone + ". Address: " + req.Address +
+		", " + req.District + ". Pincode: " + strconv.Itoa(req.Pincode)
+	msgHtml := "<strong>" + msg + "<strong>" + HTMLfooter
+	if r.sendMail(msg,msgHtml )!=true {
 		log.Println("[RequestMail]: Failed to send request email to " + donor.Name)
 	}
 }
