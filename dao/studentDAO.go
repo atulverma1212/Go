@@ -31,10 +31,10 @@ func (m *DonorDAO) connect() {
 	db = session.DB(m.Database)
 }
 
-func (m *DonorDAO) create(donor model.Donor) error {
+func (m *DonorDAO) create(donor *model.Donor) error {
 	donor.Id = next(CollectionDonor)
 	err := db.C(CollectionDonor).Insert(&donor)
-	go service.VerificationMail(&donor)
+	go service.SuccessMail(donor)
 	return err
 }
 

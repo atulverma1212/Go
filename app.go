@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"log"
 )
 
 func main() {
@@ -16,6 +17,7 @@ func main() {
 	router.HandleFunc("/donor/verify/{token}", dao.VerifyDonor).Methods("GET")
 	router.HandleFunc("/donor/request",dao.RequestDonor).Methods("POST")
 	router.HandleFunc("/donor/medical",dao.MedicalUpload).Methods("POST")
+	log.Println("Starting DonorSpace server ...")
 	if err := http.ListenAndServe(":3000", router); err != nil {
 		fmt.Println("Error while listening on port", err)
 	}

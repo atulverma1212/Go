@@ -55,13 +55,18 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	donor.Verified = "Yes"
-	if err := dao.create(donor); err != nil {
+	if err := dao.create(&donor); err != nil {
 		log.Println("Error while saving data")
 		http.Error(w, "Error while saving data", http.StatusNotAcceptable)
 		return
 	}
-	response, _ := json.Marshal("Data saved successfully! ")
-	w.Write(response)
+	response := utils.MakeResponse(&donor)
+	response["Response"] = "You have been Successfully registered as a Donor at DonorSpace with Id: " + response["Id"]
+	res, err := json.Marshal(response)
+	if err!= nil {
+		log.Printf("Error while marshaling json: " + err.Error())
+	}
+	w.Write(res)
 }
 
 func GetAll(w http.ResponseWriter, r *http.Request) {
@@ -187,7 +192,7 @@ func MedicalUpload(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			donor.Verified="Yes"
-			go dao.create(donor)
+			go dao.create(&donor)
 		}
 	}
 	w.Write([]byte("Your file has been processed successfully"))
