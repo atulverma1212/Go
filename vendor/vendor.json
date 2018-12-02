@@ -3,6 +3,36 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "qpqjJdg4Ci2oKoRWAqQYMg+ec9s=",
+			"path": "GoProject",
+			"revision": "ca9c626ae84adc8e7a9152c70150c38e663a1096",
+			"revisionTime": "2018-11-20T17:52:35Z"
+		},
+		{
+			"checksumSHA1": "D4wc+cmGYmWgexj+zRX3MBE1Tcc=",
+			"path": "GoProject/dao",
+			"revision": "ca9c626ae84adc8e7a9152c70150c38e663a1096",
+			"revisionTime": "2018-11-20T17:52:35Z"
+		},
+		{
+			"checksumSHA1": "bulVqmrO6uq6+c2hevEyIKBQ8i8=",
+			"path": "GoProject/model",
+			"revision": "ca9c626ae84adc8e7a9152c70150c38e663a1096",
+			"revisionTime": "2018-11-20T17:52:35Z"
+		},
+		{
+			"checksumSHA1": "qxxTWMfrPPv4eP8TiI5ZvmyANxg=",
+			"path": "GoProject/service",
+			"revision": "ca9c626ae84adc8e7a9152c70150c38e663a1096",
+			"revisionTime": "2018-11-20T17:52:35Z"
+		},
+		{
+			"checksumSHA1": "UyrLMAzDloMVBle+3dCeNmdI9uk=",
+			"path": "GoProject/utils",
+			"revision": "ca9c626ae84adc8e7a9152c70150c38e663a1096",
+			"revisionTime": "2018-11-20T17:52:35Z"
+		},
+		{
 			"checksumSHA1": "Wb8zvmCAKx41dQtnYJ4mXvh1/0g=",
 			"path": "cloud.google.com/go/compute/metadata",
 			"revision": "74b12019e2aa53ec27882158f59192d7cd6d1998",

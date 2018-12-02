@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"log"
 )
 
 const (
@@ -12,7 +13,7 @@ const (
 	REGEX_PHONE = "^[0-9]{10}$"
 	REGEX_PINCODE = "^[0-9]{6}$"
     REGEX_BG = "^[ABO]{1,2}[+-]$"
-    REGEX_DOB= "^(0[1-9]|1[0,1,2])[-\\](0[1-9]|[1,2][0-9]|3[0,1])[-\\](19|20)\\d\\d$"
+    REGEX_DOB= "^(0[1-9]|1[0,1,2])-(0[1-9]|[1,2][0-9]|3[0,1])-(19|20)\\d\\d$"
 	REGEX_EMAIL = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
 )
 
@@ -26,6 +27,7 @@ func validateDonor(donor *model.Donor) bool {
 		return false
 	}
 	if len(donor.Email)==0 || !validateEmail(&donor.Email) {
+		log.Println("[validateDonor]: Invalid email for " + donor.Name + ". Removing email from entry.")
 		donor.Email = ""
 	}
 	return true

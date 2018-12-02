@@ -13,6 +13,9 @@ func main() {
 	router.HandleFunc("/donor/getAll", dao.GetAll).Methods("GET")
 	router.HandleFunc("/donor/get/{id}", dao.GetDonor).Methods("GET")
 	router.HandleFunc("/donor/remove/{id}", dao.RemoveDonor).Methods("GET")
+	router.HandleFunc("/donor/verify/{token}", dao.VerifyDonor).Methods("GET")
+	router.HandleFunc("/donor/request",dao.RequestDonor).Methods("POST")
+	router.HandleFunc("/donor/medical",dao.MedicalUpload).Methods("POST")
 	if err := http.ListenAndServe(":3000", router); err != nil {
 		fmt.Println("Error while listening on port", err)
 	}

@@ -4,49 +4,83 @@ import (
 	"GoProject/model"
 	"strconv"
 	"log"
-	"google.golang.org/api/gmail/v1"
-	"encoding/base64"
-	"fmt"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
 type Request struct {
-	from string
-	to   string
+	from *mail.Email
+	to   *mail.Email
+	subject string
 	body string
 }
 
 const (
-	consMIME = "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	verSUBJ = "DonorSpace Verification Mail"
 	regSUBJ  = "DonorSpace Registration Successful"
+	reqSUBJ = "Blood Donation Request"
+	HTMLfooter = "<hr>This is an auto-generated email. Please donot reply  to the sender. For any queries, contact team@DonorSpace"
 )
 
-func newRequest(to string) *Request {
+func newRequest(name,email,subject string) *Request {
 	return &Request{
-		to: to,
+		to: mail.NewEmail(name, email),
+		subject: subject,
+		from: fromDonorSpace,
 	}
 }
 
-func (r *Request) sendMail(message string) bool{
-	body := "To: " + r.to + "\r\nSubject: " + regSUBJ + "\r\n" + consMIME + "\r\n" + message
-	msg := gmail.Message{
-		Raw: base64.StdEncoding.EncodeToString([]byte(body)),
+func (r *Request) sendMail(msgString,msgHTML string) bool{
+	message := mail.NewSingleEmail(r.from, r.subject, r.to, msgString, msgHTML)
+	response, err := client.Send(message)
+	if err != nil {
+		log.Printf("[sendMail]: Error while sending mail. Request: %v. Error: %v. Response code: %v", r, err, response.StatusCode)
+		return false
 	}
-	if _, err := Mailer.Users.Messages.Send("verma.av1997@gmail.com", &msg).Do(); err!= nil {
-		fmt.Println("Unable to send msg. " )
-		fmt.Println(err)
-	}
+	log.Println(response.Body)
+	log.Printf("Mail sent successfully to %v. Response code: %v", r.to, response.StatusCode)
 	return true
+}
+
+func VerificationMail(donor *model.Donor) {
+	if len(donor.Email)==0 {
+		log.Println("[VerificationMail]: Invalid email for " + donor.Name)
+		return
+	}
+	r := newRequest(donor.Name, donor.Email, verSUBJ)
+	link := "http://" + baseUrl + "/donor/verify?token=" + donor.Verified + "|" + strconv.Itoa(int(donor.Id))
+	msg := "Dear " + donor.Name + ", Click the following link to verify your email at DonorSpace." + link
+	htmlMsg := "<strong>" + msg + "</strong>" + HTMLfooter
+	if r.sendMail(msg, htmlMsg)!=true {
+		log.Println("[VerificationMail]: Failed to send verification email to " + donor.Name)
+	}
 }
 
 func SuccessMail(donor *model.Donor) {
 	if len(donor.Email)==0 {
-		log.Println("Invalid email for " + donor.Name)
+		log.Println("[SuccessMail]: Invalid email for " + donor.Name)
 		return
 	}
-	r := newRequest(donor.Email)
+	r := newRequest(donor.Name, donor.Email, regSUBJ)
 	msg := "Dear " + donor.Name + ", You have been successfully registered as a Donor at DonorSpace." +
 		"Your registration id is DSpace_" + strconv.Itoa(int(donor.Id))
-	if r.sendMail(msg )!=true {
-		log.Println("Failed to send email to " + donor.Name)
+	htmlMsg := "<strong>" + msg + "</strong>" + HTMLfooter
+	if r.sendMail(msg, htmlMsg)!=true {
+		log.Println("[SuccessMail]: Failed to send registration successfull email to " + donor.Name)
 	}
 }
+
+func RequestMail(donor *model.Donor, req *model.Donor) {
+	if len(donor.Email)==0 {
+		log.Printf("Email not present for %v. Contact by phone: %v.",donor.Name,donor.Phone)
+		return
+	}
+	r := newRequest(donor.Name, donor.Email, reqSUBJ)
+	// Todo Edit message
+	msg := "<strong>Dear " + donor.Name + ", You have been successfully registered as a Donor at DonorSpace." +
+		"Your registration id is DSpace_" + strconv.Itoa(int(donor.Id)) +"</strong>"
+	if r.sendMail(msg,"" )!=true {
+		log.Println("[RequestMail]: Failed to send request email to " + donor.Name)
+	}
+}
+
+

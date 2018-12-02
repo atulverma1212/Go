@@ -14,7 +14,7 @@ func TestInsert(t *testing.T) {
 
 func getDonor() model.Donor{
 	return model.Donor{
-		Id: next(Collection),
+		Id: next(CollectionDonor),
 		Name: "Atul",
 		DOB: "12-12-1997",
 		Phone: "7508086142",
@@ -23,4 +23,8 @@ func getDonor() model.Donor{
 		District: "Faridkot",
 		Pincode: 151203,
 	}
+}
+
+func TestGetMap(t *testing.T) {
+
 }
